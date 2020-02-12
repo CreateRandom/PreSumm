@@ -289,6 +289,7 @@ class Trainer(object):
                     for batch in test_iter:
                         gold = []
                         pred = []
+                        logger.info(batch.story_id)
                         if (cal_lead):
                             selected_ids = [list(range(batch.clss.size(1)))] * batch.batch_size
                         for i, idx in enumerate(selected_ids):

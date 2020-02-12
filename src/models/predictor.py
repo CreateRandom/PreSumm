@@ -4,7 +4,7 @@ from __future__ import print_function
 import codecs
 import os
 import math
-
+import pickle
 import torch
 
 from tensorboardX import SummaryWriter
@@ -125,8 +125,9 @@ class Translator(object):
                   attn_debug=False):
 
         self.model.eval()
-        gold_path = self.args.result_path + '.%d.gold' % step
-        can_path = self.args.result_path + '.%d.candidate' % step
+        gold_path = os.path.join(self.args.result_path, '%d.gold' % step)
+        can_path =  os.path.join(self.args.result_path, '%d.candidate' % step)
+        print(can_path)
         self.gold_out_file = codecs.open(gold_path, 'w', 'utf-8')
         self.can_out_file = codecs.open(can_path, 'w', 'utf-8')
 
@@ -135,13 +136,16 @@ class Translator(object):
         self.gold_out_file = codecs.open(gold_path, 'w', 'utf-8')
         self.can_out_file = codecs.open(can_path, 'w', 'utf-8')
 
-        raw_src_path = self.args.result_path + '.%d.raw_src' % step
+        raw_src_path = os.path.join(self.args.result_path + '%d.raw_src' % step)
         self.src_out_file = codecs.open(raw_src_path, 'w', 'utf-8')
 
         # pred_results, gold_results = [], []
         ct = 0
+        story_order = []
         with torch.no_grad():
             for batch in data_iter:
+                print(batch.story_id)
+                story_order.extend(batch.story_id)
                 if(self.args.recall_eval):
                     gold_tgt_len = batch.tgt.size(1)
                     self.min_length = gold_tgt_len + 20
@@ -183,6 +187,13 @@ class Translator(object):
         self.can_out_file.close()
         self.gold_out_file.close()
         self.src_out_file.close()
+        print(story_order)
+        id_to_story_dict = dict(zip(range(len(story_order)),story_order))
+
+        id_to_story_dict_path = os.path.join(self.args.result_path,'id_to_story_dict.pkl')
+
+        with open(id_to_story_dict_path,'wb') as f:
+            pickle.dump(id_to_story_dict,f)
 
         if (step != -1):
             rouges = self._report_rouge(gold_path, can_path)

@@ -276,11 +276,13 @@ def format_to_bert(args):
     if (args.dataset != ''):
         datasets = [args.dataset]
     else:
-        datasets = ['train', 'valid', 'test']
+        datasets = ['test']
     for corpus_type in datasets:
         a_lst = []
+        print(pjoin(args.raw_path, '*' + corpus_type + '.*.json'))
         for json_f in glob.glob(pjoin(args.raw_path, '*' + corpus_type + '.*.json')):
             real_name = json_f.split('/')[-1]
+            print('Name is: ' + real_name)
             a_lst.append((corpus_type, json_f, args, pjoin(args.save_path, real_name.replace('json', 'bert.pt'))))
         print(a_lst)
         pool = Pool(args.n_cpus)
@@ -320,7 +322,12 @@ def _format_to_bert(params):
         b_data_dict = {"src": src_subtoken_idxs, "tgt": tgt_subtoken_idxs,
                        "src_sent_labels": sent_labels, "segs": segments_ids, 'clss': cls_ids,
                        'src_txt': src_txt, "tgt_txt": tgt_txt}
+        if 'story_id' in d:
+            b_data_dict['story_id'] = d['story_id']
         datasets.append(b_data_dict)
+
+    ids = [x['story_id'] for x in datasets]
+    print(ids)
     logger.info('Processed instances %d' % len(datasets))
     logger.info('Saving to %s' % save_file)
     torch.save(datasets, save_file)
@@ -330,7 +337,7 @@ def _format_to_bert(params):
 
 def format_to_lines(args):
     corpus_mapping = {}
-    for corpus_type in ['valid', 'test', 'train']:
+    for corpus_type in ['test']:
         temp = []
         for line in open(pjoin(args.map_path, 'mapping_' + corpus_type + '.txt')):
             temp.append(hashhex(line.strip()))
@@ -338,17 +345,13 @@ def format_to_lines(args):
     train_files, valid_files, test_files = [], [], []
     for f in glob.glob(pjoin(args.raw_path, '*.json')):
         real_name = f.split('/')[-1].split('.')[0]
-        if (real_name in corpus_mapping['valid']):
-            valid_files.append(f)
-        elif (real_name in corpus_mapping['test']):
+        if (real_name in corpus_mapping['test']):
             test_files.append(f)
-        elif (real_name in corpus_mapping['train']):
-            train_files.append(f)
         # else:
         #     train_files.append(f)
 
-    corpora = {'train': train_files, 'valid': valid_files, 'test': test_files}
-    for corpus_type in ['train', 'valid', 'test']:
+    corpora = {'test': test_files}
+    for corpus_type in ['test']:
         a_lst = [(f, args) for f in corpora[corpus_type]]
         pool = Pool(args.n_cpus)
         dataset = []
@@ -356,7 +359,7 @@ def format_to_lines(args):
         for d in pool.imap_unordered(_format_to_lines, a_lst):
             dataset.append(d)
             if (len(dataset) > args.shard_size):
-                pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
+                pt_file = "{:s}/{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
                 with open(pt_file, 'w') as save:
                     # save.write('\n'.join(dataset))
                     save.write(json.dumps(dataset))
@@ -366,7 +369,8 @@ def format_to_lines(args):
         pool.close()
         pool.join()
         if (len(dataset) > 0):
-            pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
+            pt_file = "{:s}/{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
+            print(pt_file)
             with open(pt_file, 'w') as save:
                 # save.write('\n'.join(dataset))
                 save.write(json.dumps(dataset))
@@ -376,9 +380,10 @@ def format_to_lines(args):
 
 def _format_to_lines(params):
     f, args = params
-    print(f)
     source, tgt = load_json(f, args.lower)
-    return {'src': source, 'tgt': tgt}
+    _, f_name = os.path.split(f)
+    story_id = f_name.rstrip('.story.json')
+    return {'src': source, 'tgt': tgt, 'story_id': story_id}
 
 
 
@@ -417,6 +422,7 @@ def format_xsum_to_lines(args):
         pool.join()
         if (len(dataset) > 0):
             pt_file = "{:s}.{:s}.{:d}.json".format(args.save_path, corpus_type, p_ct)
+            print(pt_file)
             with open(pt_file, 'w') as save:
                 save.write(json.dumps(dataset))
                 p_ct += 1
