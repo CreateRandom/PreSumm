@@ -2,6 +2,15 @@
 
 **This code is for EMNLP 2019 paper [Text Summarization with Pretrained Encoders](https://arxiv.org/abs/1908.08345)**
 
+**Updates Jan 22 2020**: Now you can **Summarize Raw Text Input!**. Swith to the dev branch, and use `-mode test_text` and use `-text_src $RAW_SRC.TXT` to input your text file.
+* use `-test_from $PT_FILE$` to use your model checkpoint file.
+* Format of the source text file:
+  * For **abstractive summarization**, each line is a document.
+  * If you want to do **extractive summarization**, please insert ` [CLS] [SEP] ` as your sentence boundaries.
+* There are example input files in the [raw_data directory](https://github.com/nlpyang/PreSumm/tree/dev/raw_data)
+* If you also have reference summaries aligned with your source input, please use `-text_tgt $RAW_TGT.TXT` to keep the order for evaluation.
+
+
 Results on CNN/DailyMail (20/8/2019):
 
 
@@ -60,17 +69,25 @@ Results on CNN/DailyMail (20/8/2019):
 
 **Package Requirements**: torch==1.1.0 pytorch_transformers tensorboardX multiprocess pyrouge
 
+
+
 **Updates**: For encoding a text longer than 512 tokens, for example 800. Set max_pos to 800 during both preprocessing and training.
 
 
 Some codes are borrowed from ONMT(https://github.com/OpenNMT/OpenNMT-py)
 
 ## Trained Models
-[CNN/DM Extractive](https://drive.google.com/open?id=1kKWoV0QCbeIuFt85beQgJ4v0lujaXobJ)
+[CNN/DM BertExt](https://drive.google.com/open?id=1kKWoV0QCbeIuFt85beQgJ4v0lujaXobJ)
 
-[CNN/DM Abstractive](https://drive.google.com/open?id=1-IKVCtc4Q-BdZpjXc4s70_fRsWnjtYLr)
+[CNN/DM BertExtAbs](https://drive.google.com/open?id=1-IKVCtc4Q-BdZpjXc4s70_fRsWnjtYLr)
 
-[XSum](https://drive.google.com/open?id=1H50fClyTkNprWJNh10HWdGEdDdQIkzsI)
+[CNN/DM TransformerAbs](https://drive.google.com/open?id=1yLCqT__ilQ3mf5YUUCw9-UToesX5Roxy)
+
+[XSum BertExtAbs](https://drive.google.com/open?id=1H50fClyTkNprWJNh10HWdGEdDdQIkzsI)
+
+## System Outputs
+
+[CNN/DM and XSum](https://drive.google.com/file/d/1kYA384UEAQkvmZ-yWZAfxw7htCbCwFzC) 
 
 ## Data Preparation For XSum
 [Pre-processed data](https://drive.google.com/open?id=1BWBN1coTWGBqrWoOfRc5dhojPHhatbYs)
